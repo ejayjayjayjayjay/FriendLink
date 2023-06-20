@@ -15,6 +15,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::get('/admin-only', function () {
+    return 'only admin can access';
+})->middleware('can:visitAdminPages');
+
 //User related routes
 Route::get('/', [UserController::class, "showCorrectHomepage"])->name('login');
 Route::post('/register',[UserController::class, "register"])->middleware('guest');
