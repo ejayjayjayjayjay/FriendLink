@@ -35,3 +35,4 @@ Route::put('/post/{post}',[PostController::class, 'actuallyUpdate'])->middleware
 
 // Profile related routes
 Route::get('/profile/{user:username}',[UserController::class, 'profile']);
+Route::get('/manage-avatar',[UserController::class, 'showAvatarForm']);
