@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Follow;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Intervention\Image\Facades\Image;
@@ -12,27 +13,27 @@ use Illuminate\Validation\Rules\Unique;
 class UserController extends Controller
 {
     public function storeAvatarForm(Request $request) {
-       $request->validate([
-        'avatar' => 'required|image|max:3000'
-       ]);
+        $request->validate([
+            'avatar' => 'required|image|max:3000'
+        ]);
 
-       $user = auth()->user();
+        $user = auth()->user();
 
-       $filename = $user->id . '-' . uniqid() . '.jpg';
-       
-       $imgData =  Image::make($request->file('avatar'))->fit(120)->encode('jpg');
-       Storage::put('public/avatars/' . $filename, $imgData);
+        $filename = $user->id . '-' . uniqid() . '.jpg';
 
-       $oldAvatar = $user->avatar;
+        $imgData = Image::make($request->file('avatar'))->fit(120)->encode('jpg');
+        Storage::put('public/avatars/' . $filename, $imgData);
 
-       $user->avatar = $filename;
-       $user->save();
+        $oldAvatar = $user->avatar;
 
-       if ($oldAvatar != "/fallback-avatar.jpg") {
+        $user->avatar = $filename;
+        $user->save();
+
+        if ($oldAvatar != "/fallback-avatar.jpg") {
             Storage::delete(str_replace("/storage/", "public/", $oldAvatar));
-       }
+        }
 
-       return back()->with('success', 'Congrats on the new avatar.');
+        return back()->with('success', 'Congrats on the new avatar.');
     }
 
     public function showAvatarForm() {
@@ -40,7 +41,13 @@ class UserController extends Controller
     }
 
     public function profile(User $user) {
-        return view('profile-posts', ['avatar' => $user->avatar, 'username' => $user->username, 'posts' => $user->posts()->latest()->get(), 'postCount' => $user->Posts()->count()]);
+        $currentlyFollowing = 0;
+        
+        if (auth()->check()) {
+            $currentlyFollowing = Follow::where([['user_id', '=', auth()->user()->id], ['followeduser', '=', $user->id]])->count();
+        }
+
+        return view('profile-posts', ['currentlyFollowing' => $currentlyFollowing, 'avatar' => $user->avatar, 'username' => $user->username, 'posts' => $user->posts()->latest()->get(), 'postCount' => $user->posts()->count()]);
     }
 
     public function logout() {
